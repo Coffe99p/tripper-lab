@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt_BR">
+    <string name="maps_listener_name">Tripper Lab — instruções do Maps</string>
+    <string name="maps_eyebrow">FERRAMENTAS • CAPTURA OPCIONAL</string>
+    <string name="maps_title">Maps no Tripper.</string>
+    <string name="maps_diagnostic_title">Diagnóstico do Maps</string>
+    <string name="maps_intro">Use esta captura apenas para investigar instruções. Ela não é necessária para enviar o Maps ao Tripper.</string>
+    <string name="maps_access">Configurar acesso às notificações</string>
+    <string name="maps_access_on">Acesso autorizado</string>
+    <string name="maps_access_off">Autorize o acesso para testar</string>
+    <string name="maps_privacy">O app lê somente o Google Maps, durante o envio ao Tripper ou uma captura iniciada por você. O envio não salva os textos da rota. A captura opcional registra textos e ícones neste aparelho; pode conter ruas e destinos. Nada é enviado pela internet.</string>
+    <string name="maps_start">Iniciar captura do Maps</string>
+    <string name="maps_open">Abrir Google Maps</string>
+    <string name="maps_stop">Parar captura</string>
+    <string name="maps_sample_title">Última amostra observada</string>
+    <string name="maps_small_icon">Ícone pequeno da notificação do Maps</string>
+    <string name="maps_large_icon">Ícone grande da notificação do Maps</string>
+    <string name="maps_export">Exportar registro do Maps</string>
+    <string name="maps_clear">Apagar registro do Maps</string>
+    <string name="maps_clear_message">Isso encerra a captura e apaga os textos e ícones salvos neste app. Arquivos já exportados não serão apagados.</string>
+    <string name="maps_bluetooth">Voltar à conexão</string>
+    <string name="maps_scope">A captura de diagnóstico dura até 20 minutos e é independente do envio ao Tripper. Parar captura não encerra o Bluetooth; use Encerrar sessão na tela principal ou Encerrar na notificação. Nenhuma sessão retoma sozinha ao reabrir o app.</string>
+    <string name="maps_exported">Registro exportado.</string>
+    <string name="maps_failed">Não foi possível concluir a ação. Tente novamente.</string>
+    <string name="maps_not_installed">Não foi possível abrir o Google Maps.</string>
+    <string name="maps_need_access">Autorize o Tripper Lab nas configurações de acesso às notificações e volte para iniciar a captura.</string>
+</resources>

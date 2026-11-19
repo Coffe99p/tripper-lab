@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt_BR">
+    <string name="app_name">Tripper Lab</string>
+    <string name="device_title">Seu aparelho</string>
+    <string name="battery_title">Bateria agora</string>
+    <string name="refresh">Atualizar diagnóstico</string>
+    <string name="copy">Copiar diagnóstico</string>
+    <string name="copied">Diagnóstico copiado.</string>
+    <string name="updated">Diagnóstico atualizado.</string>
+    <string name="privacy">Bluetooth funciona apenas durante a sessão iniciada por você, por 10 ou 30 minutos. Sem internet ou localização. O PIN não é salvo. O diagnóstico fica somente neste aparelho.</string>
+    <string name="battery_note">A temperatura é a da bateria. Esta leitura isolada não mede o consumo do app.</string>
+    <string name="device_info">%1$s %2$s\nAndroid %3$s • API %4$d\nApp %5$s</string>
+    <string name="battery_info">%1$s • %2$s\nTemperatura: %3$s</string>
+    <string name="plugged">conectado à energia</string>
+    <string name="unplugged">fora da tomada</string>
+    <string name="unknown">indisponível</string>
+    <string name="battery_percentage">%1$d%%</string>
+    <string name="temperature">%1$.1f °C</string>
+    <string name="updated_at">Atualizado às %1$s</string>
+    <string name="diagnostic_report">Tripper Lab — diagnóstico Bluetooth\n\n%1$s\n\nBateria: %2$s\n%3$s\n\nMaps: envio ativado manualmente; captura de textos separada.</string>
+    <string name="bridge_start">Usar Maps no Tripper</string>
+    <string name="bridge_off">Maps: envio desligado. Conecte o Tripper para ativar.</string>
+    <string name="bridge_hint">Após conectar, toque em Usar Maps no Tripper e inicie uma rota no Google Maps. Não é necessário iniciar captura de diagnóstico.</string>
+    <string name="bridge_active">Maps ativado. Dados incompletos ou sem atualização por 30 segundos mostram espera/recálculo. Ao encerrar a rota, a sessão termina. Use Encerrar sessão para parar manualmente.</string>
+    <string name="scan">Procurar Tripper</string>
+    <string name="reconnect">Reconectar ao Tripper salvo</string>
+    <string name="pin_hint">PIN mostrado no Tripper</string>
+    <string name="send_pin">Enviar PIN</string>
+    <string name="simulation_title" tools:ignore="Typos">Comando simulado</string>
+    <string name="maneuver_label">Manobra</string>
+    <string name="distance_label">Distância até a manobra</string>
+    <string name="send_simulation">Enviar ao Tripper</string>
+    <string name="confirm_display">Funcionou no mostrador: salvar Tripper</string>
+    <string name="confirm_title">Confirmar exibição real</string>
+    <string name="confirm_body">A seta e a distância selecionadas apareceram corretamente no mostrador da moto? Só confirme depois de conferir o Tripper.</string>
+    <string name="confirm_yes">Sim, apareceram</string>
+    <string name="stop">Encerrar sessão</string>
+    <string name="forget">Esquecer Tripper / pedir novo PIN</string>
+    <string name="forget_title">Esquecer o dispositivo salvo?</string>
+    <string name="forget_body">A sessão será encerrada. Você poderá buscar o Tripper novamente e informar o PIN do mostrador.</string>
+    <string name="view_log">Ver registro do teste</string>
+    <string name="no_log">Nenhuma sessão nesta abertura.</string>
+    <string name="close">Fechar</string>
+    <string name="counts">Envios Bluetooth: %1$d • Respostas: %2$d\nEnvio aceito pelo Android não confirma a exibição no Tripper.</string>
+    <string name="candidate">%1$s • final %2$s • %3$d dBm</string>
+    <string name="simulation_description">%1$s • %2$s</string>
+    <string name="permissions_needed">Autorize dispositivos próximos para procurar e conectar ao Tripper.</string>
+    <string name="bluetooth_off">Ligue o Bluetooth do celular e toque em procurar novamente.</string>
+    <string name="start_failed">Não foi possível iniciar o teste. Mantenha o app aberto e confira a permissão de dispositivos próximos.</string>
+    <string-array name="maneuvers">
+        <item>Direita</item><item>Esquerda</item><item>Em frente</item><item>Chegada</item><item>Rotatória, 2ª saída (experimental)</item>
+        <item>Curva suave à esquerda</item><item>Curva suave à direita</item><item>Manter à esquerda</item><item>Manter à direita</item><item>Entrar na via</item>
+    </string-array>
+    <string-array name="distances">
+        <item>50 m</item><item>200 m</item><item>999 m</item><item>1 km</item><item>1,5 km</item>
+    </string-array>
+    <string-array name="connection_states">
+        <item>Aguardando início</item><item>Procurando Tripper</item><item>Selecione o mostrador</item>
+        <item>Preparando conexão</item><item>PIN do mostrador</item><item>Tripper conectado</item><item>Sessão interrompida</item>
+    </string-array>
+</resources>

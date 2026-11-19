@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt_BR">
+    <string name="personal_version">TRIPPER LAB • VERSÃO PESSOAL %1$s</string>
+    <string name="home_intro">Conecte o mostrador e leve as instruções do Google Maps para a moto. Configure com a moto parada.</string>
+    <string name="home_access_ready">Notificações do Maps: acesso autorizado</string>
+    <string name="home_access_needed">Primeiro, autorize a leitura das notificações do Maps.</string>
+    <string name="home_access_manage">Gerenciar acesso às notificações</string>
+    <string name="tools_show">Mostrar ferramentas e diagnóstico</string>
+    <string name="tools_hide">Ocultar ferramentas e diagnóstico</string>
+    <string name="home_diagnostics">Diagnóstico do Maps</string>
+    <string name="capture_notice">Captura de diagnóstico ativa. Para encerrá-la, abra Ferramentas → Diagnóstico do Maps.</string>
+    <string name="show_simulation">Testar símbolos com a moto parada</string>
+    <!-- Portuguese, incorrectly flagged by the English spelling dictionary. -->
+    <string name="hide_simulation" tools:ignore="Typos">Ocultar comandos simulados</string>
+    <string name="simulation_help">Envie uma seta de teste e confira no mostrador. Se for o primeiro pareamento, confirme que funcionou para salvar o Tripper e liberar o Maps.</string>
+    <string name="help_title">Como usar e resolver problemas</string>
+    <string name="help_back">Voltar à tela anterior</string>
+    <string name="help_pair_title">Primeira conexão</string>
+    <string name="help_pair_body">1. Autorize as notificações na tela principal e volte.\n2. Encerre a conexão do app Royal. Escolha 10 ou 30 minutos antes de conectar.\n3. Toque em Procurar Tripper e ligue a ignição durante a busca. Autorize dispositivos próximos e notificações quando solicitado.\n4. Selecione RE_DISP e digite o PIN do mostrador somente no app.\n5. Envie uma seta simulada, confira a moto parada e toque em Funcionou no mostrador: salvar Tripper.</string>
+    <string name="help_daily_title">Nas próximas vezes</string>
+    <string name="help_daily_body">1. Ligue a ignição e o Bluetooth do Pixel.\n2. Escolha a duração e toque em Reconectar ao Tripper salvo.\n3. Toque em Usar Maps no Tripper.\n4. Abra o Google Maps e inicie uma rota.\n5. Para parar, toque em Encerrar sessão ou em Encerrar na notificação.\n\nO limite conta desde o início da busca ou reconexão. Não é renovado pelas instruções. Ao terminar o limite, inicie outra sessão manualmente, com a moto parada. Não há reconexão automática.</string>
+    <string name="help_wait_title">O mostrador fica em espera</string>
+    <string name="help_wait_body">É esperado se não houver rota ou se a notificação não tiver uma manobra e uma distância reconhecidas. “Head toward” sem distância é um desses casos. Veja a notificação expandida do Maps: o texto pode ser diferente da tela do próprio Maps.\n\nInstruções sem atualização por 30 segundos, recálculo, rotatórias sem saída numerada e outros formatos não reconhecidos também mostram espera. A distância anterior não é reutilizada.</string>
+    <string name="help_disconnect_title">Desconectou ou não ativou o Maps</string>
+    <string name="help_disconnect_body">Confira ignição, Bluetooth, proximidade do Pixel e se o app Royal está desconectado. Verifique o motivo na tela principal e reconecte manualmente. Se continuar falhando, em Ferramentas use Esquecer Tripper / pedir novo PIN e repita a primeira conexão.\n\nSe o Maps não ativar, confira o acesso às notificações e a confirmação do primeiro pareamento. Fechar a rota ou perder acesso às notificações encerra o envio. O app tenta colocar espera antes de desconectar; a volta imediata ao relógio não é garantida.</string>
+    <string name="help_tools_title">Ferramentas opcionais</string>
+    <string name="help_tools_body">Não é necessário iniciar captura para usar o Maps no Tripper. O diagnóstico registra textos e ícones por até 20 minutos e pode conter ruas e destinos. Para parar a captura, use Parar captura na tela de diagnóstico; isso não encerra a sessão Bluetooth.\n\nMedir bateria compara duas sessões de 20–25 minutos, sem carregador, com condições semelhantes. Para Maps com Tripper, escolha 30 minutos. Ainda não há comparação real nem economia comprovada.</string>
+    <string name="help_limits_title">Sobre esta versão pessoal</string>
+    <string name="help_limits_body">Feita para o Pixel 8 Pro e o Tripper Pod testado neste projeto. Não é um app oficial da Royal Enfield. Ainda faltam testes em trajeto, da integração com tela bloqueada, do encerramento no mostrador e de alguns símbolos. Os testes automáticos não substituem essas conferências.\n\nO app não acessa internet nem localização. O envio ao Tripper não salva ruas ou destinos; o PIN não é salvo. Capturas e medições ficam no aparelho e só são exportadas por você. O acesso às notificações pode ser revogado nas configurações do Android.</string>
+</resources>

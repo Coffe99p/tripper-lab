@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/help_root"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+        <Button android:id="@+id/help_back" style="@style/TestButton" android:text="@string/help_back" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_title" android:textSize="28sp" android:layout_marginTop="16dp" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_pair_title" android:layout_marginTop="24dp" />
+        <TextView style="@style/Body" android:text="@string/help_pair_body" android:layout_marginTop="8dp" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_daily_title" android:layout_marginTop="24dp" />
+        <TextView style="@style/Body" android:text="@string/help_daily_body" android:layout_marginTop="8dp" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_wait_title" android:layout_marginTop="24dp" />
+        <TextView style="@style/Body" android:text="@string/help_wait_body" android:layout_marginTop="8dp" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_disconnect_title" android:layout_marginTop="24dp" />
+        <TextView style="@style/Body" android:text="@string/help_disconnect_body" android:layout_marginTop="8dp" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_tools_title" android:layout_marginTop="24dp" />
+        <TextView style="@style/Body" android:text="@string/help_tools_body" android:layout_marginTop="8dp" />
+        <TextView style="@style/SectionTitle" android:text="@string/help_limits_title" android:layout_marginTop="24dp" />
+        <TextView style="@style/Body" android:text="@string/help_limits_body" android:layout_marginTop="8dp" />
+    </LinearLayout>
+</ScrollView>

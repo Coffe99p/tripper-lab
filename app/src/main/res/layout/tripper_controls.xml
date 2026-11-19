@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="12dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+        android:padding="16dp" android:background="@drawable/card_background">
+        <TextView android:id="@+id/connection_state" style="@style/SectionTitle" android:accessibilityLiveRegion="polite" />
+        <TextView android:id="@+id/connection_message" style="@style/Body" android:layout_marginTop="8dp" />
+        <TextView android:id="@+id/maps_live_status" style="@style/Body" android:layout_marginTop="12dp"
+            android:text="@string/bridge_off" android:textColor="@color/accent" android:accessibilityLiveRegion="polite" />
+    </LinearLayout>
+    <Button android:id="@+id/stop_button" style="@style/TestButton" android:text="@string/stop" android:enabled="false" />
+    <TextView style="@style/Body" android:text="@string/session_duration" android:labelFor="@id/session_duration" android:layout_marginTop="8dp" />
+    <Spinner android:id="@+id/session_duration" android:layout_width="match_parent" android:layout_height="56dp" android:entries="@array/session_durations" />
+    <Button android:id="@+id/reconnect_button" style="@style/TestButton" android:text="@string/reconnect" android:enabled="false"
+        android:backgroundTint="@color/button_accent_background" android:textColor="@color/button_accent_text" />
+    <Button android:id="@+id/scan_button" style="@style/TestButton" android:text="@string/scan" android:enabled="false" />
+    <LinearLayout android:id="@+id/device_list" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+    <LinearLayout android:id="@+id/pin_group" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+        <EditText android:id="@+id/pin_input" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="56dp" android:hint="@string/pin_hint" android:inputType="numberPassword" android:maxLength="6"
+            android:importantForAutofill="no" android:saveEnabled="false" />
+        <Button android:id="@+id/pin_button" style="@style/TestButton" android:text="@string/send_pin" />
+    </LinearLayout>
+    <Button android:id="@+id/bridge_start" style="@style/TestButton" android:text="@string/bridge_start"
+        android:backgroundTint="@color/button_accent_background" android:textColor="@color/button_accent_text" android:enabled="false" android:layout_marginTop="12dp" />
+    <Button android:id="@+id/home_maps" style="@style/TestButton" android:text="@string/maps_open" />
+    <TextView android:id="@+id/bridge_status" style="@style/Body" android:text="@string/bridge_hint" android:textSize="14sp" android:layout_marginTop="8dp" />
+    <Button android:id="@+id/simulation_toggle" style="@style/TestButton" android:text="@string/show_simulation" android:visibility="gone" />
+    <LinearLayout android:id="@+id/simulation_group" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:visibility="gone" android:layout_marginTop="16dp">
+        <TextView style="@style/SectionTitle" android:text="@string/simulation_title" />
+        <TextView style="@style/Body" android:text="@string/simulation_help" android:layout_marginTop="8dp" />
+        <TextView style="@style/Body" android:labelFor="@id/maneuver_spinner" android:text="@string/maneuver_label" android:layout_marginTop="8dp" />
+        <Spinner android:id="@+id/maneuver_spinner" android:layout_width="match_parent" android:layout_height="56dp" android:entries="@array/maneuvers" />
+        <TextView style="@style/Body" android:labelFor="@id/distance_spinner" android:text="@string/distance_label" />
+        <Spinner android:id="@+id/distance_spinner" android:layout_width="match_parent" android:layout_height="56dp" android:entries="@array/distances" />
+        <Button android:id="@+id/send_button" style="@style/TestButton" android:text="@string/send_simulation" android:backgroundTint="@color/button_accent_background" android:textColor="@color/button_accent_text" />
+        <Button android:id="@+id/confirm_button" style="@style/TestButton" android:text="@string/confirm_display" />
+    </LinearLayout>
+    <TextView android:id="@+id/simulation_status" style="@style/Body" android:layout_marginTop="8dp" />
+</LinearLayout>

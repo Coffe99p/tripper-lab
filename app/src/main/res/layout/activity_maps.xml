@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/maps_root" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+        <TextView style="@style/Body" android:text="@string/maps_eyebrow" android:textColor="@color/accent" android:textSize="12sp" android:letterSpacing="0.10" />
+        <TextView style="@style/SectionTitle" android:text="@string/maps_diagnostic_title" android:textSize="30sp" android:layout_marginTop="12dp" />
+        <TextView style="@style/Body" android:text="@string/maps_intro" android:layout_marginTop="12dp" />
+        <Button android:id="@+id/maps_bluetooth" style="@style/TestButton" android:text="@string/maps_bluetooth" android:layout_marginTop="16dp" android:backgroundTint="@color/accent" android:textColor="@color/background" />
+        <Button android:id="@+id/maps_battery" style="@style/TestButton" android:text="@string/battery_measure" />
+        <TextView android:id="@+id/maps_access_status" style="@style/SectionTitle" android:layout_marginTop="24dp" />
+        <Button android:id="@+id/maps_access" style="@style/TestButton" android:text="@string/maps_access" />
+        <TextView style="@style/Body" android:text="@string/maps_privacy" android:textSize="14sp" android:layout_marginTop="8dp" />
+        <Button android:id="@+id/maps_start" style="@style/TestButton" android:text="@string/maps_start" android:layout_marginTop="16dp" android:backgroundTint="@color/accent" android:textColor="@color/background" />
+        <Button android:id="@+id/maps_open" style="@style/TestButton" android:text="@string/maps_open" />
+        <Button android:id="@+id/maps_stop" style="@style/TestButton" android:text="@string/maps_stop" />
+        <TextView android:id="@+id/maps_summary" style="@style/Body" android:layout_marginTop="16dp" android:accessibilityLiveRegion="polite" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:background="@drawable/card_background" android:padding="20dp" android:layout_marginTop="20dp" android:orientation="vertical">
+            <TextView style="@style/SectionTitle" android:text="@string/maps_sample_title" />
+            <TextView android:id="@+id/maps_sample" style="@style/Body" android:layout_marginTop="12dp" android:textIsSelectable="true" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <ImageView android:id="@+id/maps_small_icon" android:layout_width="72dp" android:layout_height="72dp" android:contentDescription="@string/maps_small_icon" />
+                <ImageView android:id="@+id/maps_large_icon" android:layout_width="72dp" android:layout_height="72dp" android:contentDescription="@string/maps_large_icon" />
+            </LinearLayout>
+        </LinearLayout>
+        <Button android:id="@+id/maps_export" style="@style/TestButton" android:text="@string/maps_export" android:layout_marginTop="16dp" />
+        <Button android:id="@+id/maps_clear" style="@style/TestButton" android:text="@string/maps_clear" />
+        <TextView style="@style/Body" android:text="@string/maps_scope" android:textSize="14sp" android:layout_marginTop="12dp" />
+    </LinearLayout>
+</ScrollView>

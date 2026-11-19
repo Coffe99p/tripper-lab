@@ -1,0 +1,23 @@
+.gradle/
+.kotlin/
+.idea/
+**/build/
+local.properties
+*.iml
+*.jks
+*.keystore
+*.p12
+*.pfx
+keystore.properties
+key.properties
+*.apk
+*.aab
+artifacts/
+
+# Exportações locais do Tripper Lab, inclusive quando copiadas para fora de artifacts/.
+Tripper-Maps-diagnostico*.json
+Tripper-bateria*.json
+maps-capture.json
+maps-export-pending.json
+battery-lab.json
+battery-export-pending.json

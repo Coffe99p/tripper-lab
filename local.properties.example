@@ -1,0 +1,4 @@
+# Para configurar o SDK manualmente, copie este arquivo para local.properties
+# na raiz do projeto e substitua o exemplo pelo caminho do Android SDK.
+# No Windows, use barras normais. O Android Studio também pode gerar o arquivo.
+sdk.dir=C:/Android/Sdk

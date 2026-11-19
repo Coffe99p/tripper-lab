@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/battery_root" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+        <TextView style="@style/Body" android:text="@string/battery_eyebrow" android:textColor="@color/accent" />
+        <TextView style="@style/SectionTitle" android:text="@string/battery_measure" android:textSize="32sp" android:layout_marginTop="12dp" />
+        <TextView style="@style/Body" android:text="@string/battery_instructions" android:layout_marginTop="12dp" />
+        <TextView android:id="@+id/battery_reading" style="@style/SectionTitle" android:layout_marginTop="20dp" />
+        <Button android:id="@+id/battery_baseline" style="@style/TestButton" android:text="@string/battery_baseline" android:layout_marginTop="16dp" />
+        <Button android:id="@+id/battery_tripper" style="@style/TestButton" android:text="@string/battery_with_tripper" />
+        <Button android:id="@+id/battery_finish" style="@style/TestButton" android:text="@string/battery_finish" />
+        <Button android:id="@+id/battery_cancel" style="@style/TestButton" android:text="@string/battery_cancel" />
+        <TextView android:id="@+id/battery_results" style="@style/Body" android:layout_marginTop="20dp" android:textIsSelectable="true" />
+        <Button android:id="@+id/battery_refresh" style="@style/TestButton" android:text="@string/battery_refresh" />
+        <Button android:id="@+id/battery_export" style="@style/TestButton" android:text="@string/battery_export" />
+        <TextView style="@style/Body" android:text="@string/battery_limits" android:textSize="14sp" android:layout_marginTop="16dp" />
+    </LinearLayout>
+</ScrollView>

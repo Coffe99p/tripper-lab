@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="pt_BR">
+    <string name="battery_eyebrow">FERRAMENTAS • MEDIÇÃO OPCIONAL</string>
+    <string name="battery_measure">Medir bateria</string>
+    <string name="battery_instructions">Compare duas sessões de 20 a 25 minutos, sem USB ou carregador, com o mesmo trajeto, brilho e uso da tela. Inicie a rota no Maps antes da medição e deixe a captura de diagnóstico parada.\n\nPara Maps com Tripper, escolha sessão de 30 minutos antes de conectar e ative Usar Maps no Tripper. Para Maps sem Tripper, encerre a sessão Bluetooth. Configure antes de sair e termine a medição somente depois de parar.</string>
+    <string name="battery_reading">%1$s • %2$s\n%3$s</string>
+    <string name="battery_baseline">Iniciar: Maps sem Tripper</string>
+    <string name="battery_with_tripper">Iniciar: Maps com Tripper</string>
+    <string name="battery_finish">Finalizar medição</string>
+    <string name="battery_cancel">Cancelar medição</string>
+    <string name="battery_refresh">Atualizar leitura</string>
+    <string name="battery_export">Exportar medições</string>
+    <string name="battery_limits">Medição do celular inteiro, com o mesmo medidor nos dois cenários. Não indica consumo exclusivo deste app. Não mantém a tela acesa nem cria um serviço de medição em segundo plano. Se o Android encerrar o processo, a amostra será marcada como interrompida. Amostras curtas ou feitas carregando não servem para comparação. Histórico local de até 20 resultados; nada é enviado pela internet.</string>
+    <string name="session_duration">Duração máxima da sessão</string>
+    <string-array name="session_durations"><item>10 minutos — teste curto</item><item>30 minutos — medir consumo</item></string-array>
+</resources>
