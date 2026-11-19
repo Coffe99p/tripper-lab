@@ -8,11 +8,10 @@ O Tripper Lab é um aplicativo Android independente que leva as indicações de 
 
 Para compilar, tenha Git, Android Studio com JDK 17 ou superior, Android SDK Platform 36 e Android SDK Build-Tools 36.0.0. O Gradle Wrapper do projeto usa Gradle 9.3.1 e o Android Gradle Plugin é o 9.1.0. A primeira compilação precisa de acesso à internet para baixar as dependências. Você pode compilar e executar os testes unitários sem conectar o celular ou a moto.
 
-1. No GitHub, copie a URL HTTPS em **Code**. Em um terminal PowerShell, na pasta onde deseja guardar o projeto, execute os comandos abaixo. Quem já tem o código local pode começar pelo passo 2.
+1. Use uma conta com acesso ao repositório privado. No PowerShell, abra a pasta onde deseja guardar o projeto e execute os comandos abaixo. Se o Git solicitar autenticação, entre com essa conta. Quem já tem o código local pode começar pelo passo 2.
 
    ```powershell
-   $url = Read-Host "Cole a URL HTTPS do repositório"
-   git clone $url tripper-lab
+   git clone https://github.com/Coffe99p/tripper-lab.git
    Set-Location tripper-lab
    ```
 

@@ -4,7 +4,9 @@ Versão 0.6.0, preparada em 19/11/2026 para o Pixel 8 Pro e o Tripper Pod deste 
 
 ## Atualizar ou instalar
 
-Instalador: `artifacts/Tripper-Lab-0.6.0.apk`. Para atualizar o app existente, instale por cima, sem desinstalar nem apagar dados. Isso preserva o Tripper salvo, os registros e as medições. O PIN nunca é salvo.
+**Em uma cópia recém-clonada**, siga o [README](../README.md) para compilar o APK. O arquivo gerado fica em `app/build/outputs/apk/debug/app-debug.apk`. Para instalá-lo em um emulador ou aparelho de teste conectado, execute `adb install -r app/build/outputs/apk/debug/app-debug.apk` na raiz do projeto.
+
+**No Pixel pessoal**, o APK assinado para atualização fica em `artifacts/Tripper-Lab-0.6.0.apk` na máquina de desenvolvimento. Para atualizar o app existente, instale por cima, sem desinstalar nem apagar dados. Isso preserva o Tripper salvo, os registros e as medições. O PIN nunca é salvo.
 
 No celular, abra o APK pelo gerenciador de arquivos e, se o Android pedir, autorize essa origem a instalar aplicativos. Após instalar, essa autorização pode ser desativada novamente. No computador já autorizado para depuração USB, a atualização também pode ser feita com `adb install -r artifacts/Tripper-Lab-0.6.0.apk`.
 
