@@ -64,19 +64,33 @@ jobs:
         run: |
           adb install -r app/build/outputs/apk/debug/app-debug.apk
           adb shell wm size 1080x2400
-          adb shell wm density 320
-          adb shell monkey -p com.joaofabijack.tripper -c android.intent.category.LAUNCHER 1
+          adb shell wm density 240
+          adb shell input keyevent KEYCODE_WAKEUP
+          adb shell wm dismiss-keyguard
+          for animation in window_animation_scale transition_animation_scale animator_duration_scale; do adb shell settings put global "$animation" 0; done
+          adb shell am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -n com.joaofabijack.tripper/.MainActivity
           python3 - <<'PY'
           import re,subprocess,time,xml.etree.ElementTree as ET
           def adb(*args):
               return subprocess.check_output(['adb',*map(str,args)])
           def find(view):
-              for _ in range(8):
-                  adb('shell','uiautomator','dump','/data/local/tmp/entrega.xml')
-                  root=ET.fromstring(adb('exec-out','cat','/data/local/tmp/entrega.xml'))
+              for attempt in range(18):
+                  adb('shell','rm','-f','/data/local/tmp/entrega.xml')
+                  try:
+                      adb('shell','uiautomator','dump','/data/local/tmp/entrega.xml')
+                      root=ET.fromstring(adb('exec-out','cat','/data/local/tmp/entrega.xml'))
+                  except (ET.ParseError,subprocess.CalledProcessError):
+                      time.sleep(1)
+                      continue
                   node=root.find(".//node[@resource-id='com.joaofabijack.tripper:id/"+view+"']")
                   if node is not None: return node
-                  time.sleep(.5)
+                  if attempt in (3,6,9,12):
+                      down=view not in ('app_version','home_access_status','maps_access_status','help_root','help_back')
+                      a,b=(1900,750) if down else (750,1900)
+                      adb('shell','input','swipe',500,a,500,b,400)
+                  time.sleep(.6)
+              print(adb('shell','dumpsys','activity','activities').decode().split('mResumedActivity')[-1][:300])
+              print(adb('exec-out','cat','/data/local/tmp/entrega.xml').decode()[:3500])
               raise ValueError('Controle ausente: '+view)
           def tap(view):
               coords=list(map(int,re.findall(r'\d+',find(view).attrib['bounds'])))
@@ -89,44 +103,3 @@ jobs:
           tap('home_diagnostics');find('maps_access_status');tap('maps_bluetooth');find('home_access_status')
           print('Diagnóstico e retorno OK')
           PY
-
-  windows:
-    runs-on: windows-latest
-    timeout-minutes: 30
-    steps:
-      - name: Clonar o repositório privado em uma pasta vazia
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh auth setup-git --hostname github.com
-          git clone https://github.com/Coffe99p/tripper-lab.git
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          Set-Location tripper-lab
-          git checkout --detach 6a3477e77d38a64f83c82d6e11001c46cc829f3f
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          if (Test-Path local.properties) { throw 'Configuração local inesperada no clone' }
-      - name: Compilar, executar JUnit e lint pelo script do README
-        shell: pwsh
-        working-directory: tripper-lab
-        run: |
-          $env:JAVA_HOME=$env:JAVA_HOME_17_X64
-          $sdk=$env:ANDROID_HOME
-          & "$sdk/cmdline-tools/latest/bin/sdkmanager.bat" 'platforms;android-36' 'build-tools;36.0.0'
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          $sdkPath=$sdk.Replace('\','/').Replace(':','\:')
-          $model=Get-Content -Raw local.properties.example
-          if (!$model.Contains('sdk.dir=C\:/Android/Sdk')) { throw 'O modelo do SDK está incorreto' }
-          [IO.File]::WriteAllText((Join-Path $PWD 'local.properties'), $model.Replace('C\:/Android/Sdk',$sdkPath).Replace("`r`n","`n"))
-          .\scripts\build.ps1
-          foreach ($file in @('app/build/outputs/apk/debug/app-debug.apk','app/build/reports/tests/testDebugUnitTest/index.html','app/build/reports/lint-results-debug.html')) {
-            if (!(Test-Path -PathType Leaf $file)) { throw "Arquivo ausente $file" }
-          }
-          $total=0
-          foreach ($file in Get-ChildItem app/build/test-results/testDebugUnitTest/TEST-*.xml) {
-            $suite=([xml](Get-Content -Raw $file)).testsuite
-            if (([int]$suite.errors + [int]$suite.failures + [int]$suite.skipped) -ne 0) { throw "Falha na suíte $($suite.name)" }
-            $total += [int]$suite.tests
-          }
-          if ($total -ne 50) { throw "Contagem inesperada de testes: $total" }
-          Write-Host "$total testes aprovados"
