@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 59b21b0c69983e1c9017448661f6c3716793eff6
+          ref: 05526cb20ce1c93eb3a2beddfa6ca3833a24ac8a
           persist-credentials: false
       - name: Preparar o SDK e o JDK 17
         run: |
@@ -74,3 +74,42 @@ jobs:
           tap('home_diagnostics');find('maps_access_status');tap('maps_bluetooth');find('home_access_status')
           print('Diagnóstico e retorno OK')
           PY
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Clonar o repositório privado em uma pasta vazia
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh auth setup-git --hostname github.com
+          git clone https://github.com/Coffe99p/tripper-lab.git
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Set-Location tripper-lab
+          git checkout --detach 05526cb20ce1c93eb3a2beddfa6ca3833a24ac8a
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          if (Test-Path local.properties) { throw 'Configuração local inesperada no clone' }
+      - name: Compilar, executar JUnit e lint pelo script do README
+        shell: pwsh
+        working-directory: tripper-lab
+        run: |
+          $env:JAVA_HOME=$env:JAVA_HOME_17_X64
+          $sdk=$env:ANDROID_HOME
+          & "$sdk/cmdline-tools/latest/bin/sdkmanager.bat" 'platforms;android-36' 'build-tools;36.0.0'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $sdkPath=$sdk.Replace('\','/')
+          (Get-Content local.properties.example) -replace '^sdk.dir=.*$',"sdk.dir=$sdkPath" | Set-Content local.properties -Encoding ascii
+          .\scripts\build.ps1
+          foreach ($file in @('app/build/outputs/apk/debug/app-debug.apk','app/build/reports/tests/testDebugUnitTest/index.html','app/build/reports/lint-results-debug.html')) {
+            if (!(Test-Path -PathType Leaf $file)) { throw "Arquivo ausente $file" }
+          }
+          $total=0
+          foreach ($file in Get-ChildItem app/build/test-results/testDebugUnitTest/TEST-*.xml) {
+            $suite=([xml](Get-Content -Raw $file)).testsuite
+            if (([int]$suite.errors + [int]$suite.failures + [int]$suite.skipped) -ne 0) { throw "Falha na suíte $($suite.name)" }
+            $total += [int]$suite.tests
+          }
+          if ($total -ne 50) { throw "Contagem inesperada de testes: $total" }
+          Write-Host "$total testes aprovados"
