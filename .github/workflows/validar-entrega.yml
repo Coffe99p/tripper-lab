@@ -38,13 +38,23 @@ jobs:
       - name: Iniciar Android virtual
         run: |
           SDK="$ANDROID_HOME/cmdline-tools/latest/bin"
-          "$SDK/sdkmanager" 'emulator' 'system-images;android-34;default;x86_64'
+          export PATH="$ANDROID_HOME/platform-tools:$PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          "$SDK/sdkmanager" 'platform-tools' 'emulator' 'system-images;android-34;default;x86_64'
           echo no | "$SDK/avdmanager" create avd --name entrega --package 'system-images;android-34;default;x86_64'
           sudo chown "$(id -u):$(id -g)" /dev/kvm
-          "$ANDROID_HOME/emulator/emulator" -avd entrega -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd entrega -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect -memory 2048 -cores 2 -partition-size 2048 < /dev/null > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          emupid=$!
+          trap 'tail -60 "$RUNNER_TEMP/emulator.log"' ERR
+          for _ in {1..60}; do
+            kill -0 "$emupid" || { tail -60 "$RUNNER_TEMP/emulator.log"; exit 1; }
+            if adb devices | grep -Eq "^emulator-[0-9]+[[:space:]]+device"; then break; fi
+            sleep 2
+          done
           timeout 300 adb wait-for-device
           timeout 240 bash -c 'until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
           adb shell input keyevent 82
+          adb shell wm dismiss-keyguard
       - name: Instalar o APK e navegar nas telas
         run: |
           adb install -r app/build/outputs/apk/debug/app-debug.apk
