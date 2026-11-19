@@ -1,0 +1,76 @@
+name: Validar entrega 0.6.0
+on:
+  push:
+    branches: [validacao/entrega-0.6.0]
+permissions:
+  contents: read
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 59b21b0c69983e1c9017448661f6c3716793eff6
+          persist-credentials: false
+      - name: Preparar o SDK e o JDK 17
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Executar os comandos do README e conferir os relatórios
+        run: |
+          sh ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          test -s app/build/reports/tests/testDebugUnitTest/index.html
+          test -s app/build/reports/lint-results-debug.html
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          roots=[ET.parse(x).getroot() for x in glob.glob('app/build/test-results/testDebugUnitTest/TEST-*.xml')]
+          for root in roots: print(root.get('name'), root.get('tests'), 'testes')
+          counts={k:sum(int(x.get(k,0)) for x in roots) for k in ('tests','skipped','errors','failures')}
+          print(counts)
+          assert counts == dict(tests=50,skipped=0,errors=0,failures=0)
+          issues=ET.parse('app/build/reports/lint-results-debug.xml').findall('issue')
+          print('Lint:', len(issues), 'ocorrências')
+          assert not issues
+          PY
+      - name: Iniciar Android virtual
+        run: |
+          SDK="$ANDROID_HOME/cmdline-tools/latest/bin"
+          "$SDK/sdkmanager" 'emulator' 'system-images;android-34;default;x86_64'
+          echo no | "$SDK/avdmanager" create avd --name entrega --package 'system-images;android-34;default;x86_64'
+          sudo chown "$(id -u):$(id -g)" /dev/kvm
+          "$ANDROID_HOME/emulator/emulator" -avd entrega -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          timeout 300 adb wait-for-device
+          timeout 240 bash -c 'until adb shell getprop sys.boot_completed | grep -q 1; do sleep 2; done'
+          adb shell input keyevent 82
+      - name: Instalar o APK e navegar nas telas
+        run: |
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          adb shell wm size 1080x2400
+          adb shell wm density 320
+          adb shell monkey -p com.joaofabijack.tripper -c android.intent.category.LAUNCHER 1
+          python3 - <<'PY'
+          import re,subprocess,time,xml.etree.ElementTree as ET
+          def adb(*args):
+              return subprocess.check_output(['adb',*map(str,args)])
+          def find(view):
+              for _ in range(8):
+                  adb('shell','uiautomator','dump','/data/local/tmp/entrega.xml')
+                  root=ET.fromstring(adb('exec-out','cat','/data/local/tmp/entrega.xml'))
+                  node=root.find(".//node[@resource-id='com.joaofabijack.tripper:id/"+view+"']")
+                  if node is not None: return node
+                  time.sleep(.5)
+              raise ValueError('Controle ausente: '+view)
+          def tap(view):
+              coords=list(map(int,re.findall(r'\d+',find(view).attrib['bounds'])))
+              adb('shell','input','tap',(coords[0]+coords[2])//2,(coords[1]+coords[3])//2)
+          print('Versão:',find('app_version').get('text'))
+          tap('home_help');find('help_root');tap('help_back');find('home_access_status')
+          print('Ajuda e retorno OK')
+          tap('tools_toggle');tap('home_battery');find('battery_baseline');adb('shell','input','keyevent',4)
+          print('Medição de bateria e retorno OK')
+          tap('home_diagnostics');find('maps_access_status');tap('maps_bluetooth');find('home_access_status')
+          print('Diagnóstico e retorno OK')
+          PY
