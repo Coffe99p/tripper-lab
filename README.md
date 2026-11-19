@@ -16,7 +16,7 @@ Para compilar, tenha Git, Android Studio com JDK 17 ou superior, Android SDK Pla
    ```
 
 2. No Android Studio, abra a pasta que contém `settings.gradle.kts`. No **SDK Manager**, confira os componentes indicados acima. Para instalar pelo terminal e usar `adb`, instale também **Android SDK Platform-Tools** e inclua a pasta `platform-tools` no `PATH`.
-3. Aguarde a sincronização do Gradle. Se precisar configurar o SDK manualmente, copie `local.properties.example` para `local.properties` na raiz e ajuste `sdk.dir` para o diretório do SDK mostrado no SDK Manager. O arquivo de exemplo usa um caminho fictício. [Modelo de configuração](local.properties.example).
+3. Aguarde a sincronização do Gradle. Se precisar configurar o SDK manualmente, copie `local.properties.example` para `local.properties` na raiz e ajuste `sdk.dir` para o diretório do SDK mostrado no SDK Manager. No Windows, mantenha a barra invertida antes dos dois-pontos da unidade e use `/` entre as pastas, como em `sdk.dir=C\:/Android/Sdk`. [Modelo de configuração](local.properties.example).
 
 ## Gerar e atualizar o instalador
 
