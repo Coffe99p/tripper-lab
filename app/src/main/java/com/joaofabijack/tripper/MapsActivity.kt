@@ -1,6 +1,5 @@
 package com.joaofabijack.tripper
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.ComponentName
@@ -20,7 +19,7 @@ import android.widget.Toast
 import java.io.File
 
 @Suppress("DEPRECATION")
-class MapsActivity : Activity() {
+class MapsActivity : TripperActivity() {
     private val component by lazy { ComponentName(this, MapsNotificationListener::class.java) }
 
     override fun onCreate(savedInstanceState: Bundle?) {

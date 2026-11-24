@@ -9,8 +9,6 @@
             android:text="@string/bridge_off" android:textColor="@color/accent" android:accessibilityLiveRegion="polite" />
     </LinearLayout>
     <Button android:id="@+id/stop_button" style="@style/TestButton" android:text="@string/stop" android:enabled="false" />
-    <TextView style="@style/Body" android:text="@string/session_duration" android:labelFor="@id/session_duration" android:layout_marginTop="8dp" />
-    <Spinner android:id="@+id/session_duration" android:layout_width="match_parent" android:layout_height="56dp" android:entries="@array/session_durations" />
     <Button android:id="@+id/reconnect_button" style="@style/TestButton" android:text="@string/reconnect" android:enabled="false"
         android:backgroundTint="@color/button_accent_background" android:textColor="@color/button_accent_text" />
     <Button android:id="@+id/scan_button" style="@style/TestButton" android:text="@string/scan" android:enabled="false" />

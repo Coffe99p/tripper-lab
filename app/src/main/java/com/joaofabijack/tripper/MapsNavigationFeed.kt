@@ -23,7 +23,9 @@ object MapsNavigationFeed {
         try {
             val n = sbn.notification
             val summary = n.flags and Notification.FLAG_GROUP_SUMMARY != 0
-            val result = MapsInstructionParser.parse(n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.take(512),
+            val result = MapsInstructionParser.fromNotification(
+                n.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.take(512),
+                n.extras.getCharSequence("android.shortCriticalText")?.toString()?.take(32),
                 n.category, sbn.isOngoing, summary)
             callback(Event.Posted(sbn.key, result, SystemClock.elapsedRealtime(),
                 if (snapshot) System.currentTimeMillis() - sbn.postTime else 0))

@@ -13,6 +13,15 @@ class MapsInstructionParserTest {
         assertEquals(MapsInstructionParser.Direction.LEFT, left.direction)
         assertEquals(400, left.meters)
     }
+    @Test fun directionAndCompactDistanceMustBelongToOneRecognizedInstruction() {
+        fun notification(title: String, compact: String) =
+            MapsInstructionParser.fromNotification(title, compact, "navigation", true, false)
+        assertEquals(80, notification("Turn left onto B", "80\u00a0m").meters)
+        assertEquals(40, notification("40 m · Turn left onto B", "80 m").meters)
+        assertNull(notification("Turn left onto B", "Arrive 16:02").meters)
+        assertNull(notification("Head toward B", "80 m").direction)
+    }
+
     @Test fun observedStartupAndHeadingDoNotBecomeStraightAhead() {
         for (title in listOf("Starting navigation…", "Head toward Rua de teste")) {
             assertEquals(MapsInstructionParser.State.INCOMPLETE, parse(title).state)

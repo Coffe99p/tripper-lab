@@ -114,7 +114,8 @@ object MapsDiagnostics {
                 }
                 @Suppress("DEPRECATION")
                 val hasCustomView = notification.contentView != null
-                val interpreted = MapsInstructionParser.parse(fields.optString(Notification.EXTRA_TITLE),
+                val interpreted = MapsInstructionParser.fromNotification(fields.optString(Notification.EXTRA_TITLE),
+                    fields.optString("android.shortCriticalText"),
                     notification.category, sbn.isOngoing, notification.flags and Notification.FLAG_GROUP_SUMMARY != 0)
                 event.put("interpretation", JSONObject().put("state", interpreted.state.name)
                     .put("direction", interpreted.direction?.name).put("meters", interpreted.meters).put("exit", interpreted.exit))
@@ -218,7 +219,8 @@ object MapsDiagnostics {
                 "android.bigText" to "Texto expandido", "android.shortCriticalText" to "Resumo curto")
             for (key in fields.keys()) append("${labels[key] ?: key.removePrefix("android.")}: ${fields.opt(key)}\n")
             if (fields.length() == 0) append("Nenhum texto disponível.\n")
-            val parsed = MapsInstructionParser.parse(fields.optString(Notification.EXTRA_TITLE), latest.optString("category"),
+            val parsed = MapsInstructionParser.fromNotification(fields.optString(Notification.EXTRA_TITLE),
+                    fields.optString("android.shortCriticalText"), latest.optString("category"),
                 latest.optBoolean("ongoing"), latest.optBoolean("groupSummary"))
             val direction = when (parsed.direction) {
                 MapsInstructionParser.Direction.LEFT -> "Esquerda"

@@ -25,6 +25,32 @@ class MapsRouteStateTest {
         }
     }
 
+    @Test fun repeatedTurnWithoutDistanceBridgesTheGapButNeverDelaysANewTurn() {
+        val route = MapsRouteState(0)
+        val right = route.posted("route", parse("50 m · Turn right onto A"), 100)
+        assertEquals(right, route.posted("route", parse("Turn right onto A"), 1_100))
+        val left = route.posted("route", parse("120 m · Turn left onto B"), 1_101)
+        assertEquals(TripperProtocol.Maneuver.LEFT, left.maneuver)
+        assertEquals(120, left.meters)
+    }
+
+    @Test fun repeatedPartialUpdatesCannotExtendTheDistanceGracePeriod() {
+        val route = MapsRouteState(0)
+        val turn = route.posted("route", parse("50 m · Turn right onto A"), 1_000, 500)
+        assertEquals(turn, route.posted("route", parse("Turn right onto A"), 8_499))
+        assertNull(route.current(8_500).maneuver)
+        assertNull(route.posted("route", parse("Turn right onto A"), 8_501).meters)
+    }
+
+    @Test fun anotherStreetOrSourceCannotBorrowADistance() {
+        for ((key, title) in listOf("route" to "Turn right onto B", "other" to "Turn right onto A")) {
+            val route = MapsRouteState(0)
+            route.posted("route", parse("50 m · Turn right onto A"), 100)
+            assertNull(route.posted(key, parse(title), 200).maneuver)
+            assertNull(route.posted("route", parse("Turn right onto A"), 300).meters)
+        }
+    }
+
     @Test fun unrelatedNotificationsAndTheirRemovalDoNotClearTheRoute() {
         val route = MapsRouteState(0)
         val first = route.posted("route", parse("200 m · Turn right"), 100)

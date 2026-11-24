@@ -12,8 +12,19 @@ object MapsInstructionParser {
         LEFT, RIGHT, SLIGHT_LEFT, SLIGHT_RIGHT, STRAIGHT, KEEP_LEFT, KEEP_RIGHT, MERGE,
         ROUNDABOUT, ROUNDABOUT_RIGHT, EXIT_ROUNDABOUT,
     }
-    data class Result(val state: State, val direction: Direction? = null, val meters: Int? = null, val exit: Int? = null)
+    data class Result(val state: State, val direction: Direction? = null, val meters: Int? = null, val exit: Int? = null,
+        val instruction: String? = null)
     private val distancePrefix = Regex("^([0-9]+(?:[.,][0-9]{1,2})?)\\s+(km|m)\\s*[·•–-]\\s*(.+)$")
+
+    /** The compact Maps field can supply the distance for the same notification. */
+    fun fromNotification(title: String?, shortDistance: String?, category: String?, ongoing: Boolean, summary: Boolean): Result {
+        val result = parse(title, category, ongoing, summary)
+        if (result.state != State.INCOMPLETE || result.direction == null || shortDistance.isNullOrBlank()) return result
+        if (!compactDistance.matches(shortDistance.trim())) return result
+        return parse("$shortDistance · $title", category, ongoing, summary)
+    }
+
+    private val compactDistance = Regex("""[0-9]+(?:[.,][0-9]{1,2})?[\s\u00a0\u202f]+(?:km|m)""")
 
     fun parse(title: String?, category: String?, ongoing: Boolean, groupSummary: Boolean = false): Result {
         if (category != "navigation" || groupSummary) return Result(State.NOT_NAVIGATION)
@@ -44,7 +55,7 @@ object MapsInstructionParser {
         val roundabout = Regex("^(?:at the roundabout, take the ([1-9])(?:st|nd|rd|th) exit|na rotatoria, (?:pegue|tome) a ([1-9])[ªa]? saida)(?:$|\\s+(?:onto|and stay on|para|em)\\b.*)")
             .matchEntire(instruction)
         if (roundabout != null) return Result(recognizedState, Direction.ROUNDABOUT, meters,
-            roundabout.groupValues.drop(1).first { it.isNotEmpty() }.toInt())
+            roundabout.groupValues.drop(1).first { it.isNotEmpty() }.toInt(), instruction)
         val patterns = listOf(
             "(?:turn right|vire a direita|vire para a direita)" to Direction.RIGHT,
             "(?:turn left|vire a esquerda|vire para a esquerda)" to Direction.LEFT,
@@ -60,6 +71,6 @@ object MapsInstructionParser {
         val direction = patterns.firstOrNull { (pattern, _) ->
             Regex("^$pattern(?:$|[.!]|\\s+(?:onto|on|at|after|to stay on|toward|towards|na|no|em|para)\\b.*)").matches(instruction)
         }?.second ?: return Result(if (meters == null) State.INCOMPLETE else State.UNKNOWN)
-        return Result(recognizedState, direction, meters)
+        return Result(recognizedState, direction, meters, instruction = instruction)
     }
 }

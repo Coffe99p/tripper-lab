@@ -2,7 +2,7 @@
 
 O Tripper Lab é um aplicativo Android independente que leva as indicações de navegação do Google Maps ao Tripper Pod da Royal Enfield Meteor 350. Durante uma rota, o app lê a notificação de navegação no celular, interpreta a manobra e a distância e envia a indicação ao mostrador por Bluetooth Low Energy (BLE).
 
-**Versão pessoal 0.6.0** (`versionCode 9`), instalada em um Pixel 8 Pro com Android 17 em 19/11/2026. O pareamento, as setas simuladas e a reconexão ao Tripper salvo já foram confirmados no equipamento. A exibição de uma conversão real do Maps com distância ainda precisa de confirmação em trajeto. [Validação desta versão](docs/VALIDACAO-ETAPA-7.md).
+**Versão pessoal 0.8.0** (`versionCode 11`). A sessão não tem prazo e mantém o Bluetooth ao encerrar a rota. Com o app aberto, ligar a ignição inicia a conexão ao Tripper já salvo. A validação física dessa espera automática está pendente. O pareamento, as setas simuladas e a reconexão manual foram confirmados nas versões anteriores. [Histórico de validação](docs/VALIDACAO-ETAPA-7.md).
 
 ## Clonar e preparar o ambiente
 
@@ -38,7 +38,7 @@ sh ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 | Relatório dos testes unitários | `app/build/reports/tests/testDebugUnitTest/index.html` |
 | Relatório do lint | `app/build/reports/lint-results-debug.html` |
 
-A validação da versão 0.6.0 registrou **50 testes aprovados** e lint sem ocorrências. Para repetir apenas os testes durante uma alteração, execute `.\gradlew.bat :app:testDebugUnitTest` no PowerShell com o JDK configurado.
+A validação da versão 0.7.0 registrou **53 testes aprovados** e lint sem ocorrências. Para repetir apenas os testes durante uma alteração, execute `.\gradlew.bat :app:testDebugUnitTest` no PowerShell com o JDK configurado.
 
 ## Executar e conferir a instalação
 
@@ -53,7 +53,7 @@ A validação da versão 0.6.0 registrou **50 testes aprovados** e lint sem ocor
 3. Abra **Tripper Lab** pelo ícone. Confira o estado da conexão e do acesso às notificações na tela inicial. Toque em **Como usar e resolver problemas**, volte e abra **Mostrar ferramentas e diagnóstico**. Essa conferência da interface pode ser feita sem o Tripper.
 4. Para testar a navegação no equipamento, prepare o celular com Google Maps, Bluetooth e acesso às notificações. Com a moto parada, procure o Tripper, digite o PIN exibido no mostrador e confirme uma seta simulada antes de ativar **Usar Maps no Tripper**. [Guia do primeiro pareamento](docs/GUIA-DE-USO.md).
 
-**Atualização do aparelho pessoal.** O Android exige a mesma chave de assinatura para atualizar a instalação existente preservando os dados. Se aparecer `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use um aparelho de teste ou emulador para o novo APK e preserve a instalação do Pixel. O instalador pessoal original fica em `artifacts/Tripper-Lab-0.6.0.apk` na máquina de desenvolvimento. Seu SHA-256 é `BE4ACCB865A7551309D896535DE7FE0B551740D24A3613E3217186A054449817`.
+**Atualização do aparelho pessoal.** O Android exige a mesma chave de assinatura para atualizar a instalação existente preservando os dados. Se aparecer `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, use um aparelho de teste ou emulador para o novo APK e preserve a instalação do Pixel. O instalador pessoal fica em `artifacts/Tripper-Lab-0.8.0.apk` na máquina de desenvolvimento.
 
 ## Onde trabalhar no projeto
 
@@ -66,7 +66,7 @@ O projeto tem um único módulo Android, `app`. Os nomes de classes na tabela co
 | [Código Kotlin](app/src/main/java/com/joaofabijack/tripper) | `MainActivity` abre a interface. `MapsNotificationListener` recebe notificações, `MapsInstructionParser` interpreta manobras e `MapsRouteState` acompanha a rota. `TripperService` mantém a conexão BLE e `TripperProtocol` monta as mensagens do mostrador. |
 | [Recursos da interface](app/src/main/res) | `layout/` contém as telas em XML. Em `values/` ficam textos, cores e temas. |
 | [Manifesto Android](app/src/main/AndroidManifest.xml) | Declara a atividade inicial, os serviços de Bluetooth e de leitura de notificações e as permissões do app. |
-| [Testes unitários](app/src/test/java/com/joaofabijack/tripper) | Seis suítes cobrem interpretação e estado da rota, protocolo, prazo da sessão, captura de diagnóstico e medição de bateria. |
+| [Testes unitários](app/src/test/java/com/joaofabijack/tripper) | Cobrem interpretação e estado da rota, protocolo, espera pela ignição, captura de diagnóstico e medição de bateria. |
 | [Configuração do módulo](app/build.gradle.kts) | Define versão do app, níveis de API, dependências e configuração do lint. |
 | [Gradle Wrapper](gradle/wrapper) e [script de compilação](scripts/build.ps1) | Fixam a versão do Gradle e reúnem os comandos de verificação usados no Windows. |
 | [Documentação](docs) | Guia de uso, protocolo Bluetooth, roteiros de teste e registros das validações físicas. |
@@ -75,21 +75,21 @@ Para alterar o reconhecimento de uma instrução do Maps, comece por `MapsInstru
 
 ## Usar o Tripper salvo
 
-1. Com a moto parada, ligue a ignição e o Bluetooth do Pixel.
-2. Abra **Tripper Lab** e confira o acesso às notificações.
-3. Escolha a duração de 10 ou 30 minutos e toque em **Reconectar ao Tripper salvo**.
+1. Com a moto parada e o Bluetooth ligado, abra **Tripper Lab**.
+2. Confira **Aguardando a ignição**. A sessão não tem limite de duração.
+3. Ligue a ignição e aguarde **Tripper conectado**. O botão **Reconectar ao Tripper salvo** também permite iniciar a conexão manualmente.
 4. Toque em **Usar Maps no Tripper**, depois em **Abrir Google Maps**, e inicie uma rota.
 5. Para parar, use **Encerrar sessão** na tela principal ou **Encerrar** na notificação.
 
 Não é necessário iniciar captura de diagnóstico. No primeiro pareamento, procure o Tripper, informe o PIN e confirme uma simulação no mostrador antes de ativar o Maps. Veja o [passo a passo completo](docs/GUIA-DE-USO.md).
 
-O prazo conta desde o início da busca ou reconexão e não é renovado por instruções. Não há reconexão automática. Nenhuma sessão retoma sozinha após reinício do processo.
+A espera inicial pela ignição termina ao sair do app. Uma vez conectado, o serviço continua com o Maps aberto e a tela bloqueada. Se o enlace cair, tenta reconectar ao mesmo mostrador salvo e retomar o Maps. O encerramento manual pausa a conexão automática até a próxima abertura.
 
 ## Comportamento e limitações
 
-O app envia manobras com distância completa e reconhecida. **“Head toward” sem distância**, dados desconhecidos ou sem atualização por 30 segundos mostram espera/recálculo. A distância anterior não é reutilizada. Saídas numeradas de rotatória seguem a circulação pela direita, como no Brasil; rotatórias sem número e instrução de sair da rotatória não são traduzidas.
+O app envia manobras com distância completa e reconhecida. **“Head toward” sem distância**, dados desconhecidos ou sem atualização por 30 segundos mostram espera/recálculo. Quando a mesma notificação repete a manobra e a via sem informar distância, a seta e a última metragem continuam por até oito segundos desde a medição. A próxima instrução completa é enviada assim que chega. Saídas numeradas de rotatória seguem a circulação pela direita, como no Brasil; rotatórias sem número e instrução de sair da rotatória não são traduzidas.
 
-Remoção da notificação da rota, chegada explícita ou perda do acesso às notificações encerram a integração. “Arriving” indica aproximação. O app tenta substituir a seta por espera antes de desconectar; não promete volta imediata ao relógio.
+Remoção da notificação da rota, chegada explícita ou perda do acesso às notificações retiram a seta e mantêm o Bluetooth conectado. “Arriving” indica aproximação. O app tenta substituir a seta por espera antes de desconectar; não promete volta imediata ao relógio.
 
 As simulações da etapa 3 foram confirmadas pelo usuário, incluindo tela bloqueada e reconexão sem novo PIN. A integração Maps → Tripper foi entregue com **validação parcial aceita**: continuam pendentes a confirmação física inequívoca de conversões reais, bloqueio da tela durante a integração, encerramento visual e alguns símbolos. A desconexão com erro 147 observada em 12/11 não teve sua causa comprovada. A finalização da interface não transforma essas pendências em aprovações.
 
@@ -97,7 +97,7 @@ O medidor compara Maps sem Tripper e Maps com Tripper em sessões semelhantes de
 
 ## Dados e permissões
 
-O app solicita dispositivos próximos e notificações. A conexão usa um serviço com notificação e botão para encerrar, limitado a 10 ou 30 minutos. Não solicita internet nem localização. O PIN e o conteúdo das respostas Bluetooth não são salvos.
+O app solicita dispositivos próximos e notificações. A conexão usa um serviço com notificação e botão para encerrar. Não solicita internet nem localização. O PIN e o conteúdo das respostas Bluetooth não são salvos.
 
 O envio normal do Maps não grava ruas ou destinos. A captura opcional registra textos e ícones por até 20 minutos no armazenamento privado excluído de backup; pode conter dados do trajeto. Exportação e cópia são manuais. Parar captura não encerra a sessão Bluetooth. Medições ficam no aparelho, com histórico e exportação próprios.
 

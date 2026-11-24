@@ -10,6 +10,7 @@ class MapsNotificationListener : NotificationListenerService() {
     override fun onListenerConnected() {
         instance = this
         MapsDiagnostics.connection(true)
+        snapshotNavigation()
         if (MapsDiagnostics.active()) snapshot()
     }
     override fun onListenerDisconnected() {

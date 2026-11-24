@@ -24,7 +24,7 @@ import java.util.ArrayDeque
  * Runtime permission checks gate entry; later revocation is handled by guarded(). */
 @SuppressLint("MissingPermission")
 class TripperService : Service() {
-    enum class State { IDLE, SEARCHING, CHOOSING, CONNECTING, PIN, READY, ERROR }
+    enum class State { IDLE, SEARCHING, CHOOSING, CONNECTING, PIN, READY, ERROR, WAITING }
     data class Candidate(val address: String, val name: String, val rssi: Int)
     data class Snapshot(
         val state: State, val message: String, val devices: List<Candidate>,
@@ -62,16 +62,21 @@ class TripperService : Service() {
     private var lastSent = 0L
     private var wakeLock: PowerManager.WakeLock? = null
     private var active = false
+    private val watch = SavedTripperWatch()
+    private val retryWatch: Runnable = Runnable { refreshWatch() }
     private var sessionStartedAt = 0L
-    private var deadline: SessionDeadline? = null
+    private var resumeMapsAfterDrop = false
     private var logFlushScheduled = false
     private val logFlush = Runnable { flushLog() }
     private val bluetoothState = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (active && intent.action == BluetoothAdapter.ACTION_STATE_CHANGED &&
-                intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR) in
-                listOf(BluetoothAdapter.STATE_OFF, BluetoothAdapter.STATE_TURNING_OFF)) {
-                fail("Bluetooth do celular desligado. Ligue-o e reconecte quando quiser continuar.")
+            if (intent.action != BluetoothAdapter.ACTION_STATE_CHANGED) return
+            when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
+                BluetoothAdapter.STATE_ON -> refreshWatch()
+                BluetoothAdapter.STATE_OFF, BluetoothAdapter.STATE_TURNING_OFF -> {
+                    if (active) fail("Bluetooth do celular desligado.")
+                    else cancelWatch("Bluetooth desligado. Ligue-o para aguardar o Tripper.")
+                }
             }
         }
     }
@@ -84,9 +89,9 @@ class TripperService : Service() {
     companion object {
         const val SCAN = "com.joaofabijack.tripper.SCAN"
         const val RECONNECT = "com.joaofabijack.tripper.RECONNECT"
+        private const val KEEP_SESSION = "com.joaofabijack.tripper.KEEP_SESSION"
         const val STOP = "com.joaofabijack.tripper.STOP"
         private const val CHANNEL = "tripper_test"
-        const val DURATION_MINUTES = "durationMinutes"
     }
 
     override fun onBind(intent: Intent): IBinder = binder
@@ -94,6 +99,7 @@ class TripperService : Service() {
     override fun onCreate() {
         super.onCreate()
         BatteryLab.init(this)
+        BatteryLab.onMapsOnlyChanged = ::refreshWatch
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         // This protected system broadcast can originate from the privileged Bluetooth app.
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(bluetoothState, filter, RECEIVER_EXPORTED)
@@ -112,9 +118,14 @@ class TripperService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Discovery already started the session synchronously while a screen was visible.
+        if (intent?.action == KEEP_SESSION) {
+            if (!active) stopSelf(startId)
+            return START_NOT_STICKY
+        }
         if (intent?.action == STOP) { stopSession(); return START_NOT_STICKY }
         if (intent?.action !in listOf(SCAN, RECONNECT)) { stopSelf(); return START_NOT_STICKY }
-        if (!active) guarded { startSession(intent?.action == RECONNECT, intent?.getIntExtra(DURATION_MINUTES, 10) ?: 10) }
+        if (!active) guarded { startSession(intent?.action == RECONNECT) }
         return START_NOT_STICKY
     }
 
@@ -133,14 +144,69 @@ class TripperService : Service() {
     private fun permissionsGranted(): Boolean = listOf(Manifest.permission.BLUETOOTH_SCAN,
         Manifest.permission.BLUETOOTH_CONNECT).all { checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
 
-    private fun startSession(reconnect: Boolean, requestedMinutes: Int) {
+    fun screenOpened() {
+        watch.open()
+        refreshWatch()
+    }
+
+    fun screenClosed() {
+        watch.close()
+        if (!canWatch()) cancelWatch()
+    }
+
+    fun pauseWatch() {
+        watch.pause()
+        cancelWatch()
+    }
+
+    private fun canWatch() = watch.canWatch(active, BatteryLab.measuringMapsOnly())
+
+    private fun cancelWatch(reason: String = "Espera pelo Tripper encerrada.") {
+        handler.removeCallbacks(retryWatch)
+        if (state == State.WAITING) {
+            stopScan()
+            change(State.IDLE, reason)
+        }
+    }
+
+    private fun refreshWatch(): Unit = guarded {
+        if (!canWatch()) { cancelWatch(); return@guarded }
+        if (scanCallback != null || handler.hasCallbacks(retryWatch) || !permissionsGranted()) return@guarded
+        val saved = prefs.getString("address", null) ?: return@guarded
+        val adapter = manager.adapter ?: return@guarded
+        if (!adapter.isEnabled || !BluetoothAdapter.checkBluetoothAddress(saved)) return@guarded
+        val ble = adapter.bluetoothLeScanner ?: return@guarded
+        val token = generation
+        val callback = object : ScanCallback() {
+            override fun onScanResult(callbackType: Int, result: ScanResult) = route(token) {
+                if (scanCallback !== this || !canWatch() || result.device.address != saved) return@route
+                if (prefs.getString("address", null) != saved) return@route
+                stopScan()
+                // Promote the bound service only on discovery. A stale start intent cannot reconnect.
+                startService(Intent(this@TripperService, TripperService::class.java).setAction(KEEP_SESSION))
+                startSession(true)
+            }
+
+            override fun onScanFailed(errorCode: Int) = route(token) {
+                if (scanCallback !== this) return@route
+                stopScan()
+                change(State.WAITING, "A espera pelo Tripper falhou ($errorCode). Nova busca em 30 segundos.")
+                handler.postDelayed(retryWatch, 30_000)
+            }
+        }
+        scanner = ble
+        scanCallback = callback
+        ble.startScan(listOf(ScanFilter.Builder().setDeviceAddress(saved).build()),
+            ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build(), callback)
+        change(State.WAITING, "Ligue a ignição. O app vai conectar quando encontrar o seu Tripper.")
+    }
+
+    private fun startSession(reconnect: Boolean) {
         if (!permissionsGranted()) { fail("Autorize dispositivos próximos para iniciar."); return }
         if (manager.adapter?.isEnabled != true) { fail("Ligue o Bluetooth do celular e tente novamente."); return }
         cleanup()
         active = true
         sessionStartedAt = SystemClock.elapsedRealtime()
-        deadline = SessionDeadline(sessionStartedAt, requestedMinutes)
-        val sessionLimit = deadline!!
         prefs.edit().putString("lastOutcome", "A sessão anterior foi interrompida. Reconecte para iniciar outra; nenhuma sessão é retomada sozinha.").apply()
         // Keep one preceding attempt so a retry does not erase the failure under investigation.
         runCatching {
@@ -152,13 +218,7 @@ class TripperService : Service() {
         logs.clear(); candidates.clear(); sent = 0; received = 0; confirmed = false
         screen = null; simulation = "Nenhum comando simulado selecionado."
         startForeground(3, notification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
-        // Bounded diagnostic session: the Pod requires packets every ~2 seconds even locked.
-        wakeLock = getSystemService(PowerManager::class.java)
-            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TripperLab:physicalTest").apply {
-                setReferenceCounted(false); acquire(sessionLimit.durationMs + 5_000)
-            }
-        handler.postDelayed({ stopSession("Sessão encerrada após ${sessionLimit.minutes} minutos. Inicie outra se precisar.") }, sessionLimit.durationMs)
-        log("Sessão ${BuildConfig.VERSION_NAME} iniciada; limite de ${sessionLimit.minutes} minutos.")
+        log("Sessão ${BuildConfig.VERSION_NAME} iniciada.")
         val saved = prefs.getString("address", null)
         if (reconnect && saved != null && BluetoothAdapter.checkBluetoothAddress(saved)) {
             connect(manager.adapter.getRemoteDevice(saved), resume = true)
@@ -170,8 +230,8 @@ class TripperService : Service() {
             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_IMMUTABLE)
         val stop = PendingIntent.getService(this, 1, Intent(this, TripperService::class.java).setAction(STOP), PendingIntent.FLAG_IMMUTABLE)
         return Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_tripper)
-            .setContentTitle(if (mapsRoute != null) "Tripper Lab • Maps no Tripper" else "Tripper Lab • teste parado")
-            .setContentText("Sessão de até ${deadline?.minutes ?: 10} minutos. Toque para abrir ou encerrar.")
+            .setContentTitle(if (mapsRoute != null) "Tripper Lab • Maps no Tripper" else "Tripper Lab • conexão Bluetooth")
+            .setContentText("Bluetooth ativo. Toque para abrir ou encerrar.")
             .setContentIntent(open).setOngoing(true)
             .addAction(Notification.Action.Builder(null, "Encerrar", stop).build()).build()
     }
@@ -212,9 +272,15 @@ class TripperService : Service() {
 
     private fun connect(device: BluetoothDevice, resume: Boolean) {
         val token = generation
+        // The Pod needs regular writes while the phone sleeps. Renew only while the link is active.
+        if (wakeLock == null) wakeLock = getSystemService(PowerManager::class.java)
+            .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "TripperLab:connection").apply {
+                setReferenceCounted(false)
+                acquire(120_000L)
+            }
         selectedAddress = device.address
         change(State.CONNECTING, "Conectando ao Tripper • ${device.address.takeLast(5)}…")
-        connectTimeout = Runnable { fail("O Tripper não concluiu a conexão em 25 segundos. Desligue e ligue a ignição e tente de novo.") }
+        connectTimeout = Runnable { fail("O Tripper não concluiu a conexão em 25 segundos.", retryOnDiscovery = true) }
         handler.postDelayed(connectTimeout!!, 25_000)
         val localService = BluetoothGattService(TripperProtocol.SERVICE_UUID, BluetoothGattService.SERVICE_TYPE_PRIMARY)
         localService.addCharacteristic(BluetoothGattCharacteristic(TripperProtocol.CHARACTERISTIC_UUID,
@@ -257,7 +323,7 @@ class TripperService : Service() {
             if (client !== gatt) return@route
             if (status != BluetoothGatt.GATT_SUCCESS || newState == BluetoothProfile.STATE_DISCONNECTED) {
                 fail(if (status == 147) "O Bluetooth perdeu a comunicação com o Tripper (147). Reconecte; se repetir junto à moto, tente novo PIN."
-                    else "Conexão encerrada pelo Bluetooth (código $status). Reconecte para tentar de novo.")
+                    else "Conexão encerrada pelo Bluetooth (código $status).", retryOnDiscovery = true)
             } else if (newState == BluetoothProfile.STATE_CONNECTED) {
                 log("Link Bluetooth aberto; verificando serviço do Tripper.")
                 if (!client.discoverServices()) fail("Não foi possível consultar os serviços do Tripper.")
@@ -291,7 +357,7 @@ class TripperService : Service() {
             val write = pending ?: return@route
             writeTimeout?.let(handler::removeCallbacks)
             writeTimeout = null; pending = null
-            if (status != BluetoothGatt.GATT_SUCCESS) { fail("Falha na transmissão Bluetooth ($status)."); return@route }
+            if (status != BluetoothGatt.GATT_SUCCESS) { fail("Falha na transmissão Bluetooth ($status).", retryOnDiscovery = true); return@route }
             sent++; lastSent = SystemClock.elapsedRealtime()
             if (write.label != "Manutenção") log("Enviado: ${write.label}.")
             write.done?.invoke()
@@ -319,7 +385,12 @@ class TripperService : Service() {
                     if (token != generation) return@guarded
                     enqueue(TripperProtocol.ping(), "Manutenção") {
                         enqueue(TripperProtocol.ping(), "Manutenção") {
+                            if (isSelectedDeviceSaved()) watch.resume()
                             change(State.READY, "Conexão preparada. Para instruções reais, toque em Usar Maps no Tripper.")
+                            if (resumeMapsAfterDrop) {
+                                resumeMapsAfterDrop = false
+                                startMaps()
+                            }
                         }
                     }
                 } }, 150)
@@ -365,13 +436,13 @@ class TripperService : Service() {
                 is MapsNavigationFeed.Event.Posted -> route.posted(event.key, event.result, event.at, event.age)
                 is MapsNavigationFeed.Event.Removed -> route.removed(event.key, event.at)
                 MapsNavigationFeed.Event.Unavailable -> {
-                    stopSession("Acesso às notificações interrompido. Sessão encerrada.")
-                    return@feed
+                    mapsRoute = MapsRouteState(SystemClock.elapsedRealtime())
+                    MapsRouteState.Guidance(status = "Leitor de notificações indisponível. Aguardando o Maps.")
                 }
             }
             applyGuidance(next)
         } }
-        message = "Maps ligado ao Tripper. Inicie uma rota; mantenha a moto parada neste teste."
+        message = "Maps ligado ao Tripper. Aguardando instruções de navegação."
         log("Envio do Maps ativado pelo usuário; sem gravação de textos de percurso.")
         getSystemService(NotificationManager::class.java).notify(3, notification())
         applyGuidance(mapsRoute!!.current(SystemClock.elapsedRealtime()))
@@ -381,7 +452,7 @@ class TripperService : Service() {
     private fun applyGuidance(guidance: MapsRouteState.Guidance) {
         if (mapsClosing || lastGuidance == guidance) return
         lastGuidance = guidance
-        if (guidance.stop) { stopSession(guidance.status); return }
+        if (guidance.stop) mapsRoute = MapsRouteState(SystemClock.elapsedRealtime())
         val bytes = guidance.maneuver?.let { TripperProtocol.maneuver(it, guidance.meters!!, guidance.exit) }
             ?: TripperProtocol.waiting()
         simulation = "Maps: ${guidance.status}" + if (guidance.maneuver == null) "\nMostrador: símbolo de espera/recálculo." else ""
@@ -399,6 +470,7 @@ class TripperService : Service() {
         if (state != State.READY || screen == null || mapsRoute != null) return
         val address = selectedAddress ?: return
         prefs.edit().putString("address", address).apply()
+        watch.resume()
         confirmed = true
         message = "Você confirmou a exibição. Tripper salvo para reconectar."
         log("Usuário confirmou a exibição no mostrador; dispositivo salvo.")
@@ -413,11 +485,15 @@ class TripperService : Service() {
 
     private fun startHeartbeat() {
         val token = generation
+        var renewLockAt = SystemClock.elapsedRealtime() + 60_000L
         handler.postDelayed(object : Runnable {
             override fun run() = guarded {
                 if (token != generation || !active || characteristic == null) return@guarded
-                if (!mapsClosing && deadline?.expired(SystemClock.elapsedRealtime()) == true) {
-                    stopSession("Limite de duração da sessão atingido."); return@guarded
+
+                val now = SystemClock.elapsedRealtime()
+                if (now >= renewLockAt) {
+                    wakeLock?.acquire(120_000L)
+                    renewLockAt = now + 60_000L
                 }
                 if (!mapsClosing) mapsRoute?.let { applyGuidance(it.current(SystemClock.elapsedRealtime())) }
                 if (token != generation || !active) return@guarded
@@ -438,9 +514,7 @@ class TripperService : Service() {
 
     private fun pump() {
         if (pending != null || queue.isEmpty()) return
-        if (!mapsClosing && deadline?.expired(SystemClock.elapsedRealtime()) == true) {
-            stopSession("Limite de duração da sessão atingido."); return
-        }
+
         val client = gatt ?: return
         val ch = characteristic ?: return
         val write = queue.removeFirst()
@@ -457,8 +531,8 @@ class TripperService : Service() {
             @Suppress("DEPRECATION")
             client.writeCharacteristic(ch)
         }
-        if (!accepted) { fail("Android recusou o envio Bluetooth. Reconecte para tentar novamente."); return }
-        writeTimeout = Runnable { fail("O Android não confirmou a transmissão em 4 segundos.") }
+        if (!accepted) { fail("Android recusou o envio Bluetooth.", retryOnDiscovery = true); return }
+        writeTimeout = Runnable { fail("O Android não confirmou a transmissão em 4 segundos.", retryOnDiscovery = true) }
         handler.postDelayed(writeTimeout!!, 4_000)
     }
 
@@ -468,6 +542,7 @@ class TripperService : Service() {
     }
 
     fun stopSession(reason: String = "Sessão encerrada. Para buscar de novo, pode ser necessário desligar e ligar a ignição.") {
+        pauseWatch()
         if (mapsClosing) return
         if (mapsRoute != null && state == State.READY && active) {
             mapsClosing = true
@@ -496,7 +571,8 @@ class TripperService : Service() {
         stopSelf()
     }
 
-    private fun fail(reason: String) {
+    private fun fail(reason: String, retryOnDiscovery: Boolean = false) {
+        val retrySaved = retryOnDiscovery && active && !mapsClosing && isSelectedDeviceSaved()
         if (active) {
             val now = SystemClock.elapsedRealtime()
             val age = if (sent > 0) "${now - lastSent} ms" else "nenhum envio confirmado"
@@ -504,22 +580,37 @@ class TripperService : Service() {
                 "duração=${(now - sessionStartedAt) / 1000} s; envios confirmados pelo Android=$sent; " +
                 "respostas do Tripper=$received; tempo desde último envio=$age.")
         }
+        // A ride can lose radio contact with Maps in front or with the phone locked.
+        // Try the same confirmed Pod once. A failed attempt falls back to visible-screen discovery.
+        if (retrySaved && state == State.READY && permissionsGranted() && manager.adapter?.isEnabled == true) {
+            val device = manager.adapter.getRemoteDevice(requireNotNull(selectedAddress))
+            val hadMaps = mapsRoute != null
+            cleanup(keepForeground = true)
+            resumeMapsAfterDrop = hadMaps
+            change(State.CONNECTING, "Comunicação interrompida. Tentando reconectar ao Tripper salvo.")
+            handler.postDelayed({ guarded { connect(device, resume = true) } }, 1_000)
+            return
+        }
         cleanup()
         candidates.clear()
         change(State.ERROR, reason)
         prefs.edit().putString("lastOutcome", reason).apply()
         flushLog()
         stopSelf()
+        if (retrySaved && canWatch() && permissionsGranted()) {
+            change(State.WAITING, "$reason A busca automática recomeça em 10 segundos.")
+            handler.postDelayed(retryWatch, 10_000)
+        }
     }
 
-    private fun cleanup() {
+    private fun cleanup(keepForeground: Boolean = false) {
         flushLog()
         generation++
         MapsNavigationFeed.stop()
         mapsRoute = null; lastGuidance = null; mapsClosing = false
         handler.removeCallbacksAndMessages(null)
-        active = false
-        deadline = null
+        active = keepForeground
+        resumeMapsAfterDrop = false
         BatteryLab.sessionChanged(false, false)
         stopScan()
         val oldGatt = gatt; gatt = null
@@ -529,8 +620,11 @@ class TripperService : Service() {
         writeTimeout = null; connectTimeout = null; pinTimeout = null
         selectedAddress = null; confirmed = false
         simulation = "Nenhum comando simulado ativo."
-        wakeLock?.let { if (it.isHeld) it.release() }; wakeLock = null
-        stopForeground(STOP_FOREGROUND_REMOVE)
+        if (!keepForeground) {
+            wakeLock?.let { if (it.isHeld) it.release() }
+            wakeLock = null
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        }
     }
 
     private fun route(token: Int, action: () -> Unit) {
@@ -565,8 +659,12 @@ class TripperService : Service() {
         if (logs.isNotEmpty()) runCatching { File(filesDir, "last-session.txt").writeText(logs.joinToString("\n")) }
     }
 
-    override fun onTaskRemoved(rootIntent: Intent?) { stopSession("Teste encerrado ao remover o app dos recentes.") }
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        if (state in listOf(State.SEARCHING, State.CHOOSING, State.PIN))
+            stopSession("Busca encerrada ao remover o app dos recentes.")
+    }
     override fun onDestroy() {
+        BatteryLab.onMapsOnlyChanged = null
         listener = null; cleanup(); unregisterReceiver(bluetoothState); super.onDestroy()
     }
 }

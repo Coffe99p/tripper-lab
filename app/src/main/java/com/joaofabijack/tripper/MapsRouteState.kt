@@ -1,7 +1,6 @@
 package com.joaofabijack.tripper
 
-/** A fresh notification replaces the entire instruction. Never reuse a distance or
- * resurrect another notification when the selected source disappears. Monotonic time. */
+/** Track the selected Maps notification using monotonic time. */
 class MapsRouteState(private val startedAt: Long) {
     data class Guidance(
         val maneuver: TripperProtocol.Maneuver? = null,
@@ -10,9 +9,14 @@ class MapsRouteState(private val startedAt: Long) {
         val status: String,
         val stop: Boolean = false,
     )
-    companion object { const val FRESH_MS = 30_000L }
+    companion object {
+        const val FRESH_MS = 30_000L
+        private const val DISTANCE_GRACE_MS = 8_000L
+    }
     private var selectedKey: String? = null
     private var updatedAt = startedAt
+    private var measuredInstruction: String? = null
+    private var holdingDistance = false
     private var ended = false
     private var guidance = Guidance(status = "Aguardando uma instrução atual do Maps.")
 
@@ -21,16 +25,27 @@ class MapsRouteState(private val startedAt: Long) {
         if (result.state == MapsInstructionParser.State.NOT_NAVIGATION) {
             if (key == selectedKey) {
                 selectedKey = null
+                measuredInstruction = null
+                holdingDistance = false
                 guidance = Guidance(status = "O Maps deixou de informar navegação. Aguardando dados.")
             }
             return current(now)
         }
         // An old snapshot is not made fresh merely by enabling the bridge.
         if (sourceAgeMs < 0 || sourceAgeMs >= FRESH_MS) return current(now)
+        // Near a turn Maps often repeats the exact instruction, including the street,
+        // without its distance. Duplicate posts cannot extend the last measurement.
+        if (result.state == MapsInstructionParser.State.INCOMPLETE && key == selectedKey &&
+            result.instruction != null && result.instruction == measuredInstruction && guidance.maneuver != null) {
+            holdingDistance = true
+            return current(now)
+        }
         selectedKey = key
         updatedAt = now - sourceAgeMs
+        measuredInstruction = if (result.state == MapsInstructionParser.State.MANEUVER) result.instruction else null
+        holdingDistance = false
         guidance = when (result.state) {
-            MapsInstructionParser.State.ARRIVED -> Guidance(status = "Maps informou chegada. Encerrando a sessão.", stop = true)
+            MapsInstructionParser.State.ARRIVED -> Guidance(status = "Maps informou chegada. Aguardando outra rota.", stop = true)
             MapsInstructionParser.State.APPROACHING_ARRIVAL -> Guidance(status = "Aproximando-se do destino. Aguardando o Maps encerrar.")
             MapsInstructionParser.State.RECALCULATING -> Guidance(status = "Maps recalculando a rota.")
             MapsInstructionParser.State.INCOMPLETE -> Guidance(status = "Instrução incompleta: aguardando manobra e distância.")
@@ -44,12 +59,17 @@ class MapsRouteState(private val startedAt: Long) {
     fun removed(key: String, now: Long): Guidance {
         if (!ended && key == selectedKey) {
             ended = true
-            guidance = Guidance(status = "A notificação da rota foi removida. Sessão encerrada.", stop = true)
+            guidance = Guidance(status = "Rota encerrada no Maps. Aguardando outra rota.", stop = true)
         }
         return current(now)
     }
 
     fun current(now: Long): Guidance {
+        if (!ended && holdingDistance && now - updatedAt >= DISTANCE_GRACE_MS) {
+            measuredInstruction = null
+            holdingDistance = false
+            guidance = Guidance(status = "Aguardando distância atual do Maps.")
+        }
         if (!ended && now - updatedAt >= FRESH_MS) {
             guidance = Guidance(status = "Maps sem atualização há 30 segundos. Aguardando dados atuais.")
         }

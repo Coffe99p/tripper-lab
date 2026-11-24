@@ -7,7 +7,7 @@
     <string name="copy">Copiar diagnóstico</string>
     <string name="copied">Diagnóstico copiado.</string>
     <string name="updated">Diagnóstico atualizado.</string>
-    <string name="privacy">Bluetooth funciona apenas durante a sessão iniciada por você, por 10 ou 30 minutos. Sem internet ou localização. O PIN não é salvo. O diagnóstico fica somente neste aparelho.</string>
+    <string name="privacy">Com o app aberto, o Bluetooth procura o Tripper salvo. A conexão permanece ativa enquanto o Tripper estiver disponível ou até você encerrar. O diagnóstico fica neste aparelho. O PIN não é salvo.</string>
     <string name="battery_note">A temperatura é a da bateria. Esta leitura isolada não mede o consumo do app.</string>
     <string name="device_info">%1$s %2$s\nAndroid %3$s • API %4$d\nApp %5$s</string>
     <string name="battery_info">%1$s • %2$s\nTemperatura: %3$s</string>
@@ -57,5 +57,6 @@
     <string-array name="connection_states">
         <item>Aguardando início</item><item>Procurando Tripper</item><item>Selecione o mostrador</item>
         <item>Preparando conexão</item><item>PIN do mostrador</item><item>Tripper conectado</item><item>Sessão interrompida</item>
+        <item>Aguardando a ignição</item>
     </string-array>
 </resources>

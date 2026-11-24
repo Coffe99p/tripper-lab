@@ -1,13 +1,12 @@
 package com.joaofabijack.tripper
 
-import android.app.Activity
 import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.WindowInsets
 import android.widget.Button
 
-class HelpActivity : Activity() {
+class HelpActivity : TripperActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Build.VERSION.SDK_INT < 35) {

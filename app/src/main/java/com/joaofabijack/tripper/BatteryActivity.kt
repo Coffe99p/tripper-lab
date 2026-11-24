@@ -1,6 +1,5 @@
 package com.joaofabijack.tripper
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -13,7 +12,7 @@ import java.io.File
 import java.util.Locale
 
 @Suppress("DEPRECATION")
-class BatteryActivity : Activity() {
+class BatteryActivity : TripperActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BatteryLab.init(this)

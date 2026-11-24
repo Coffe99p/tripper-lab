@@ -1,12 +1,10 @@
 package com.joaofabijack.tripper
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationManager
 import android.Manifest
 import android.bluetooth.BluetoothManager
 import android.content.ComponentName
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -15,7 +13,6 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.net.Uri
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
@@ -30,21 +27,15 @@ import android.widget.Spinner
 import java.text.DateFormat
 import java.util.Date
 
-class MainActivity : Activity() {
+class MainActivity : TripperActivity() {
     private var report = ""
-    private var tripper: TripperService? = null
-    private var bound = false
     private var pendingAction: String? = null
     private var displayedDevices = emptyList<String>()
     private var toolsExpanded = false
     private var simulationExpanded = false
     private val mapsComponent by lazy { ComponentName(this, MapsNotificationListener::class.java) }
-    private val connection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            tripper = (binder as TripperService.LocalBinder).service
-            tripper?.listener = ::renderTripper
-        }
-        override fun onServiceDisconnected(name: ComponentName) { tripper = null }
+    override fun onTripperAvailable(service: TripperService) {
+        service.listener = ::renderTripper
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,15 +97,8 @@ class MainActivity : Activity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        bound = bindService(Intent(this, TripperService::class.java), connection, BIND_AUTO_CREATE)
-    }
-
     override fun onStop() {
         tripper?.listener = null
-        if (bound) unbindService(connection)
-        bound = false; tripper = null
         super.onStop()
     }
 
@@ -171,6 +155,7 @@ class MainActivity : Activity() {
     }
 
     private fun requestSession(action: String) {
+        tripper?.pauseWatch()
         pendingAction = action
         val permissions = mutableListOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
         if (Build.VERSION.SDK_INT >= 33) permissions += Manifest.permission.POST_NOTIFICATIONS
@@ -194,9 +179,7 @@ class MainActivity : Activity() {
             if (getSystemService(BluetoothManager::class.java).adapter?.isEnabled != true) {
                 Toast.makeText(this, R.string.bluetooth_off, Toast.LENGTH_LONG).show(); return
             }
-            val minutes = if (findViewById<Spinner>(R.id.session_duration).selectedItemPosition == 1) 30 else 10
-            startForegroundService(Intent(this, TripperService::class.java).setAction(action)
-                .putExtra(TripperService.DURATION_MINUTES, minutes))
+            startForegroundService(Intent(this, TripperService::class.java).setAction(action))
         } catch (_: IllegalStateException) {
             Toast.makeText(this, R.string.start_failed, Toast.LENGTH_LONG).show()
         } catch (_: SecurityException) {
@@ -205,13 +188,13 @@ class MainActivity : Activity() {
     }
 
     private fun renderTripper(snapshot: TripperService.Snapshot) {
-        val idle = snapshot.state in listOf(TripperService.State.IDLE, TripperService.State.ERROR)
-        findViewById<Spinner>(R.id.session_duration).isEnabled = idle
+        val waiting = snapshot.state == TripperService.State.WAITING
+        val idle = waiting || snapshot.state in listOf(TripperService.State.IDLE, TripperService.State.ERROR)
         findViewById<TextView>(R.id.connection_state).text = resources.getStringArray(R.array.connection_states)[snapshot.state.ordinal]
         findViewById<TextView>(R.id.connection_message).text = snapshot.message
         findViewById<Button>(R.id.scan_button).isEnabled = idle
         findViewById<Button>(R.id.reconnect_button).isEnabled = idle && tripper?.hasSavedDevice() == true
-        findViewById<Button>(R.id.stop_button).isEnabled = !idle
+        findViewById<Button>(R.id.stop_button).isEnabled = waiting || !idle
         findViewById<Button>(R.id.forget_button).isEnabled = tripper?.hasSavedDevice() == true
         findViewById<View>(R.id.pin_group).visibility = if (snapshot.state == TripperService.State.PIN) View.VISIBLE else View.GONE
         val ready = snapshot.state == TripperService.State.READY

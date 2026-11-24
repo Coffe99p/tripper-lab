@@ -24,6 +24,8 @@ object BatteryLab {
     private var mapsActive = false
     private var storageError = false
     var observer: (() -> Unit)? = null
+    var onMapsOnlyChanged: (() -> Unit)? = null
+    fun measuringMapsOnly() = run?.mode == BatteryRun.Mode.MAPS_ONLY
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val current = run ?: return
@@ -95,6 +97,7 @@ object BatteryLab {
             run = null
             return "Não foi possível acompanhar a bateria. Tente novamente."
         }
+        if (measuringMapsOnly()) onMapsOnlyChanged?.invoke()
         persist(); observer?.invoke()
         return null
     }
@@ -123,6 +126,7 @@ object BatteryLab {
         run = null
         if (registered) { app.unregisterReceiver(receiver); registered = false }
         records.add(record)
+        if (current.mode == BatteryRun.Mode.MAPS_ONLY) onMapsOnlyChanged?.invoke()
         persist(); observer?.invoke()
     }
     fun cancel() {
